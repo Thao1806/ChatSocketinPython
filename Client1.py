@@ -2,27 +2,44 @@
 from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
 import tkinter
+from unidecode import unidecode
 
 def caesar_encrypt(text, shift):
     result = ""
     for char in text:
         if char.isalpha():
+            # Xác định loại ký tự (in hoa hoặc thường)
+            is_upper = char.isupper()
+
+            # Chuyển về chữ cái in hoa để mã hóa
+            char = char.upper()
+
             # Mã hóa ký tự chữ cái
             result += chr((ord(char) + shift - ord('A')) % 26 + ord('A'))
+
+            # Chuyển về chữ cái thường nếu ban đầu là chữ cái thường
+            if not is_upper:
+                result = result.lower()
         else:
             result += char
     return result
 
+
+# Hàm giải mã caesar
 def caesar_decrypt(ciphertext, shift):
     result = ""
     for char in ciphertext:
         if char.isalpha():
-            # Giải mã ký tự chữ cái
+            # Giải mã ký tự chữ cái, bao gồm cả chữ cái thường và in hoa
+            is_upper = char.isupper()
+            char = char.upper()  # Chuyển chữ cái về in hoa để giải mã
             result += chr((ord(char) - shift - ord('A')) % 26 + ord('A'))
+            if not is_upper:
+                result = result.lower()  # Chuyển về chữ cái thường nếu ban đầu là chữ cái thường
         else:
             result += char
     return result
-
+#Hàm nhận tin nhắn từ server thông qua kết nối socket và hiển thị lại trên giao diện tkinter
 def receive():
     while True:
         try:
@@ -31,14 +48,14 @@ def receive():
         except OSError:  # Possibly client has left the chat.
             break
 
-
+# Hàm gởi tin nhẵn từ client lên server
 def send(event=None):
     msg = my_msg.get()
-    # Đánh dấu tin nhắn đã được mã hóa
-    marked_msg = f"[Đã mã hóa] {msg}"
-    encrypted_msg = caesar_encrypt(marked_msg, shift=3)  # Thay đổi shift theo nhu cầu
-    my_msg.set("")  # Clears input field.
-    client_socket.send(bytes(encrypted_msg, "utf8"))
+    #Đánh dấu tin nhắn đã được mã hóa
+    marked_mgs = f"[Encrypt] {msg}"
+    encrypted_mgs = caesar_encrypt(marked_mgs, shift= 3)
+    my_msg.set("")
+    client_socket.send(bytes(encrypted_mgs, "utf8")) # mã hóa tin nhắn khi gởi lên server
     if msg == "{quit}":
         client_socket.close()
         top.quit()
@@ -85,3 +102,4 @@ client_socket.connect(ADDR)
 receive_thread = Thread(target=receive)
 receive_thread.start()
 tkinter.mainloop()  # Starts GUI execution.
+
